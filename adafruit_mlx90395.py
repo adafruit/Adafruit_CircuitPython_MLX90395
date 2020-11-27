@@ -1,4 +1,43 @@
+# SPDX-FileCopyrightText: Copyright (c) 2020 Bryan Siepert for Adafruit Industries
+#
+# SPDX-License-Identifier: MIT
+# The MIT License (MIT)
+#
+# Copyright (c) 2020 Bryan Siepert for Adafruit Industries
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
+"""
+`adafruit_mlx90395`
+================================================================================
+CircuitPython helper library for the Melexis MLX90395 3-axis Magnetometer
+* Author(s): Bryan Siepert
+Implementation Notes
+--------------------
+**Hardware:**
+* Adafruit MLX90395 Breakout <https://www.adafruit.com/products/48XX>
 
+**Software and Dependencies:**
+Adafruit CircuitPython firmware for the supported boards:
+* https://github.com/adafruit/circuitpython/releases
+* Adafruit's Bus Device library: https://github.com/adafruit/Adafruit_CircuitPython_BusDevice
+* Adafruit's Register library: https://github.com/adafruit/Adafruit_CircuitPython_Register
+"""
 from time import sleep
 from struct import unpack_from
 from micropython import const
@@ -7,6 +46,7 @@ import adafruit_bus_device.i2c_device as i2c_device
 # from adafruit_register.i2c_struct import ROUnaryStruct, Struct
 from adafruit_register.i2c_bits import RWBits
 from adafruit_register.i2c_struct import UnaryStruct
+
 # from adafruit_register.i2c_bit import RWBit
 
 __version__ = "0.0.0-auto.0"
@@ -42,6 +82,7 @@ GAIN_AMOUNT = [
     0.5,
 ]
 
+
 class CV:
     """struct helper"""
 
@@ -62,6 +103,7 @@ class CV:
         "Returns true if the given value is a member of the CV"
         return value in cls.string
 
+
 class OSR(CV):
     """Options for ``oversample_rate``"""
 
@@ -75,6 +117,7 @@ OSR.add_values(
     )
 )
 
+
 class MLX90395:
     """Class for interfacing with the MLX90395 3-axis magnetometer"""
 
@@ -85,6 +128,7 @@ class MLX90395:
     _osr = RWBits(2, _REG_2, 0, 2, False)
     _reg0 = UnaryStruct(_REG_0, ">H",)
     _reg2 = UnaryStruct(_REG_2, ">H")
+
     def __init__(self, i2c_bus, address=_DEFAULT_ADDR):
         self.i2c_device = i2c_device.I2CDevice(i2c_bus, address)
         self._ut_lsb = None
@@ -97,10 +141,9 @@ class MLX90395:
     def reset(self):
         """Reset the sensor to it's power-on state"""
         print("reset here plz")
-        # exitMode()
-        # do once and ignore status, then once to do it?
-        status = self._command(_REG_EX)
-        status = self._command(_REG_EX)
+
+        self._command(_REG_EX)
+        self._command(_REG_EX)
 
         sleep(0.10)
         if self._command(_REG_RT) != _STATUS_RESET:
@@ -121,18 +164,14 @@ class MLX90395:
 
     @property
     def resolution(self):
-        """/**
- * Get the resolution, note that its till 16 bits just offset within the 19
- * bit ADC output.
- * @return MLX90395_RES_16, MLX90395_RES_17, MLX90395_RES_18 or
- *  MLX90395_RES_19
- */"""
+        """The current resolution setting for the magnetometer"""
         return self._resolution
 
     @property
     def gain(self):
+        """The gain applied to the magnetometer's ADC."""
         return self._gain
-    
+
     @gain.setter
     def gain(self, value):
         if not value in GAIN_AMOUNT:
@@ -146,6 +185,7 @@ class MLX90395:
         with self.i2c_device as i2c:
             i2c.write_then_readinto(buffer, buffer, in_end=1)
         return buffer[0]
+
     @property
     def magnetic(self):
         """The processed magnetometer sensor values.
@@ -161,26 +201,23 @@ class MLX90395:
         return res
 
     def _read_measurement(self):
-      # uint8_t tx[1] = {0x80}; // Read memory command
-      # uint8_t rx[12] = {0};   // status, crc, X16, Y16, Z16, T16, V16
-      # clear the buffer
-      for i in range(len(self._buffer)): self._buffer[i] = 0
-      self._buffer[0] = 0x80 # read memory command
 
-      with self.i2c_device as i2c:
-        i2c.write_then_readinto(self._buffer, self._buffer, out_end=1)
+        # clear the buffer
+        for i in range(len(self._buffer)):
+            self._buffer[i] = 0
+        self._buffer[0] = 0x80  # read memory command
 
-      if self._buffer[0] != _STATUS_DRDY: return None
+        with self.i2c_device as i2c:
+            i2c.write_then_readinto(self._buffer, self._buffer, out_end=1)
 
-      self._buffer = bytearray([0x1, 0xDF, 0xFF, 0xED, 0xFF, 0xD6, 0x0, 0x7, 0x4, 0xC6, 0x0, 0x0])
-      xi, yi, zi = unpack_from(">hhh", self._buffer, offset=2)
-      print("xi", xi, "yi", yi, "zi", zi)
-      # xi -19 yi -42 zi 7
+        if self._buffer[0] != _STATUS_DRDY:
+            return None
 
-      scalar = GAIN_AMOUNT[self._gain_val] * self._ut_lsb
-      print("scalar:", scalar, "self._ut_lsb", self._ut_lsb, "GAIN_AMOUNT[self._gain_val]", GAIN_AMOUNT[self._gain_val], "(gain_val:", self._gain_val)
-      return (xi * scalar, yi * scalar, zi * scalar)
-    
+        x_raw, y_raw, z_raw = unpack_from(">hhh", self._buffer, offset=2)
+
+        scalar = GAIN_AMOUNT[self._gain_val] * self._ut_lsb
+        return (x_raw * scalar, y_raw * scalar, z_raw * scalar)
+
     @property
     def oversample_rate(self):
         """The number of times that the measurements are re-sampled to reduce noise"""
@@ -191,4 +228,3 @@ class MLX90395:
         if not OSR.is_valid(value):
             raise AttributeError("oversample_rate must be an OSR")
         self._osr = value
-    
