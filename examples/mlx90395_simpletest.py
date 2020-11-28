@@ -4,14 +4,14 @@
 from time import sleep
 import board
 import busio
-from adafruit_mlx90395 import MLX90395, OSR
+from adafruit_mlx90395 import MLX90395
+
 
 i2c = busio.I2C(board.SCL, board.SDA)
 sensor = MLX90395(i2c)
-while True:
-    mag_x, mag_y, mag_z = sensor.magnetic
 
-    print("X1:{0:10.2f}, Y:{1:10.2f}, Z:{2:10.2f} uT".format(mag_x, mag_y, mag_z))
+while True:
+    print("X:{0:5.2f}, Y:{1:5.2f}, Z:{2:5.2f} uT".format(*sensor.magnetic))
     print("")
 
     sleep(0.5)

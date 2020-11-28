@@ -110,10 +110,50 @@ class OSR(CV):
 
 OSR.add_values(
     (
-        ("RATE_1X", 0, 1, None),
-        ("RATE_2X", 1, 2, None),
-        ("RATE_4X", 2, 4, None),
-        ("RATE_8X", 3, 8, None),
+        ("RATE_1X", 0, "1X", None),
+        ("RATE_2X", 1, "2X", None),
+        ("RATE_4X", 2, "4X", None),
+        ("RATE_8X", 3, "8X", None),
+    )
+)
+
+
+class Resolution(CV):
+    """Options for :py:meth:`MLX90640.resolution`"""
+
+
+Resolution.add_values(
+    (
+        ("BITS_16", 0, 16, None),
+        ("BITS_17", 1, 17, None),
+        ("BITS_18", 2, 18, None),
+        ("BITS_19", 3, 19, None),
+    )
+)
+
+
+class Gain(CV):
+    """Options for :py:meth:`MLX90395.gain`"""
+
+
+Gain.add_values(
+    (
+        ("GAIN_0_2", 0, "0.2", None),
+        ("GAIN_0_25", 1, "0.25", None),
+        ("GAIN_0_3333", 2, "0.3333", None),
+        ("GAIN_0_4", 3, "0.4", None),
+        ("GAIN_0_5", 4, "0.5", None),
+        ("GAIN_0_6", 5, "0.6", None),
+        ("GAIN_0_75", 6, "0.75", None),
+        ("GAIN_1", 7, "1", None),
+        ("GAIN_0_1", 8, "0.1", None),
+        ("GAIN_0_125", 9, "0.125", None),
+        ("GAIN_0_1667", 10, "0.1667", None),
+        ("GAIN_0_2", 11, "0.2", None),
+        ("GAIN_0_25", 12, "0.25", None),
+        ("GAIN_0_3", 13, "0.3", None),
+        ("GAIN_0_375", 14, "0.375", None),
+        ("GAIN_0_5", 15, "0.5", None),
     )
 )
 
@@ -140,7 +180,6 @@ class MLX90395:
 
     def reset(self):
         """Reset the sensor to it's power-on state"""
-        print("reset here plz")
 
         self._command(_REG_EX)
         self._command(_REG_EX)
@@ -154,18 +193,21 @@ class MLX90395:
     def initialize(self):
         """Configure the sensor for use"""
         self._gain_val = self.gain
-        print("gain is", self._gain_val)
         if self._gain_val == 8:  # default high field gain
-            print("lsb is 7.14")
             self._ut_lsb = 7.14
         else:
-            print("LSB IS WAT", 2.5)
             self._ut_lsb = 2.5  # medium field gain
 
     @property
     def resolution(self):
         """The current resolution setting for the magnetometer"""
         return self._resolution
+
+    @resolution.setter
+    def resolution(self, value):
+        if not Resolution.is_valid(value):
+            raise AttributeError("resolution must be a Resolution")
+        self._resolution = value
 
     @property
     def gain(self):
@@ -174,7 +216,7 @@ class MLX90395:
 
     @gain.setter
     def gain(self, value):
-        if not value in GAIN_AMOUNT:
+        if not Gain.is_valid(value):
             raise AttributeError("gain must be a valid value")
         self._gain = value
         self._gain_val = value
@@ -220,7 +262,7 @@ class MLX90395:
 
     @property
     def oversample_rate(self):
-        """The number of times that the measurements are re-sampled to reduce noise"""
+        """The number of times that the measurements are re-sampled and averaged to reduce noise"""
         return self._osr
 
     @oversample_rate.setter
