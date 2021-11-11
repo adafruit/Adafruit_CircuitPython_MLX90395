@@ -41,7 +41,7 @@ Adafruit CircuitPython firmware for the supported boards:
 from time import sleep
 from struct import unpack_from
 from micropython import const
-import adafruit_bus_device.i2c_device as i2c_device
+from adafruit_bus_device import i2c_device
 
 # from adafruit_register.i2c_struct import ROUnaryStruct, Struct
 from adafruit_register.i2c_bits import RWBits
@@ -166,7 +166,10 @@ class MLX90395:
     _resolution = RWBits(2, _REG_2, 5, 2, False)
     _filter = RWBits(3, _REG_2, 2, 2, False)
     _osr = RWBits(2, _REG_2, 0, 2, False)
-    _reg0 = UnaryStruct(_REG_0, ">H",)
+    _reg0 = UnaryStruct(
+        _REG_0,
+        ">H",
+    )
     _reg2 = UnaryStruct(_REG_2, ">H")
 
     def __init__(self, i2c_bus, address=_DEFAULT_ADDR):
@@ -245,7 +248,7 @@ class MLX90395:
     def _read_measurement(self):
 
         # clear the buffer
-        for i in range(len(self._buffer)):
+        for i in range(len(self._buffer)):  # pylint: disable=consider-using-enumerate
             self._buffer[i] = 0
         self._buffer[0] = 0x80  # read memory command
 
