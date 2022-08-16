@@ -49,7 +49,7 @@ from adafruit_register.i2c_struct import UnaryStruct
 
 # from adafruit_register.i2c_bit import RWBit
 
-__version__ = "0.0.0-auto.0"
+__version__ = "0.0.0+auto.0"
 __repo__ = "https:#github.com/adafruit/Adafruit_CircuitPython_MLX90395.git"
 
 _DEFAULT_ADDR = const(0x0C)  ## Can also be 0x18, depending on IC */
