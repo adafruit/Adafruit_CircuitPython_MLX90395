@@ -49,6 +49,12 @@ from adafruit_register.i2c_struct import UnaryStruct
 
 # from adafruit_register.i2c_bit import RWBit
 
+try:
+    from typing import Iterable, Optional, Tuple, Union
+    from busio import I2C
+except ImportError:
+    pass
+
 __version__ = "0.0.0+auto.0"
 __repo__ = "https:#github.com/adafruit/Adafruit_CircuitPython_MLX90395.git"
 
@@ -87,7 +93,9 @@ class CV:
     """struct helper"""
 
     @classmethod
-    def add_values(cls, value_tuples):
+    def add_values(
+        cls, value_tuples: Iterable[Tuple[str, int, Union[str, int], Optional[float]]]
+    ) -> None:
         "creates CV entires"
         cls.string = {}
         cls.lsb = {}
@@ -99,7 +107,7 @@ class CV:
             cls.lsb[value] = lsb
 
     @classmethod
-    def is_valid(cls, value):
+    def is_valid(cls, value: int) -> bool:
         "Returns true if the given value is a member of the CV"
         return value in cls.string
 
@@ -172,7 +180,7 @@ class MLX90395:
     )
     _reg2 = UnaryStruct(_REG_2, ">H")
 
-    def __init__(self, i2c_bus, address=_DEFAULT_ADDR):
+    def __init__(self, i2c_bus: I2C, address: int = _DEFAULT_ADDR) -> None:
         self.i2c_device = i2c_device.I2CDevice(i2c_bus, address)
         self._ut_lsb = None
         self._gain_val = 0
@@ -181,7 +189,7 @@ class MLX90395:
         self.reset()
         self.initialize()
 
-    def reset(self):
+    def reset(self) -> None:
         """Reset the sensor to it's power-on state"""
 
         self._command(_REG_EX)
@@ -193,7 +201,7 @@ class MLX90395:
 
         sleep(0.10)
 
-    def initialize(self):
+    def initialize(self) -> None:
         """Configure the sensor for use"""
         self._gain_val = self.gain
         if self._gain_val == 8:  # default high field gain
@@ -202,29 +210,29 @@ class MLX90395:
             self._ut_lsb = 2.5  # medium field gain
 
     @property
-    def resolution(self):
+    def resolution(self) -> int:
         """The current resolution setting for the magnetometer"""
         return self._resolution
 
     @resolution.setter
-    def resolution(self, value):
+    def resolution(self, value: int) -> None:
         if not Resolution.is_valid(value):
             raise AttributeError("resolution must be a Resolution")
         self._resolution = value
 
     @property
-    def gain(self):
+    def gain(self) -> int:
         """The gain applied to the magnetometer's ADC."""
         return self._gain
 
     @gain.setter
-    def gain(self, value):
+    def gain(self, value: int) -> None:
         if not Gain.is_valid(value):
             raise AttributeError("gain must be a valid value")
         self._gain = value
         self._gain_val = value
 
-    def _command(self, command_id):
+    def _command(self, command_id: int) -> int:
 
         buffer = bytearray([0x80, command_id])
         with self.i2c_device as i2c:
@@ -232,7 +240,7 @@ class MLX90395:
         return buffer[0]
 
     @property
-    def magnetic(self):
+    def magnetic(self) -> Tuple[float, float, float]:
         """The processed magnetometer sensor values.
         A 3-tuple of X, Y, Z axis values in microteslas that are signed floats.
         """
@@ -245,7 +253,7 @@ class MLX90395:
 
         return res
 
-    def _read_measurement(self):
+    def _read_measurement(self) -> Tuple[float, float, float]:
 
         # clear the buffer
         for i in range(len(self._buffer)):  # pylint: disable=consider-using-enumerate
@@ -264,12 +272,12 @@ class MLX90395:
         return (x_raw * scalar, y_raw * scalar, z_raw * scalar)
 
     @property
-    def oversample_rate(self):
+    def oversample_rate(self) -> int:
         """The number of times that the measurements are re-sampled and averaged to reduce noise"""
         return self._osr
 
     @oversample_rate.setter
-    def oversample_rate(self, value):
+    def oversample_rate(self, value: int) -> None:
         if not OSR.is_valid(value):
             raise AttributeError("oversample_rate must be an OSR")
         self._osr = value
