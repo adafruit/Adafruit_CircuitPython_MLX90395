@@ -233,7 +233,6 @@ class MLX90395:
         self._gain_val = value
 
     def _command(self, command_id: int) -> int:
-
         buffer = bytearray([0x80, command_id])
         with self.i2c_device as i2c:
             i2c.write_then_readinto(buffer, buffer, in_end=1)
@@ -254,7 +253,6 @@ class MLX90395:
         return res
 
     def _read_measurement(self) -> Tuple[float, float, float]:
-
         # clear the buffer
         for i in range(len(self._buffer)):  # pylint: disable=consider-using-enumerate
             self._buffer[i] = 0
