@@ -38,19 +38,22 @@ Adafruit CircuitPython firmware for the supported boards:
 * Adafruit's Bus Device library: https://github.com/adafruit/Adafruit_CircuitPython_BusDevice
 * Adafruit's Register library: https://github.com/adafruit/Adafruit_CircuitPython_Register
 """
-from time import sleep
+
 from struct import unpack_from
-from micropython import const
+from time import sleep
+
 from adafruit_bus_device import i2c_device
 
 # from adafruit_register.i2c_struct import ROUnaryStruct, Struct
 from adafruit_register.i2c_bits import RWBits
 from adafruit_register.i2c_struct import UnaryStruct
+from micropython import const
 
 # from adafruit_register.i2c_bit import RWBit
 
 try:
     from typing import Iterable, Optional, Tuple, Union
+
     from busio import I2C
 except ImportError:
     pass
@@ -254,7 +257,7 @@ class MLX90395:
 
     def _read_measurement(self) -> Tuple[float, float, float]:
         # clear the buffer
-        for i in range(len(self._buffer)):  # pylint: disable=consider-using-enumerate
+        for i in range(len(self._buffer)):
             self._buffer[i] = 0
         self._buffer[0] = 0x80  # read memory command
 
