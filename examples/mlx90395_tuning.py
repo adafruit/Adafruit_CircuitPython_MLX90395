@@ -3,9 +3,11 @@
 # SPDX-License-Identifier: Unlicense
 # pylint:disable=no-member
 from time import sleep
+
 import board
 import busio
-from adafruit_mlx90395 import MLX90395, OSR, Resolution, Gain
+
+from adafruit_mlx90395 import MLX90395, OSR, Gain, Resolution
 
 i2c = busio.I2C(board.SCL, board.SDA)
 sensor = MLX90395(i2c)
